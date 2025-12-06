@@ -4,33 +4,70 @@ import '../services/profile_api_service.dart';
 
 class ProfileController extends GetxController {
   final ProfileApiService apiService = ProfileApiService();
+
   var profile = Rx<Profile?>(null);
   var isLoading = false.obs;
 
+  // Versi 1: tanpa login (dummy)
+  final String dummyUserId = "683f20f1-e97a-4483-af5c-bafeb3355d7a";
+
+  // Versi 2: kalau sudah login via token
+  String? loggedInUserId;
+
   @override
   void onInit() {
-    fetchProfileById("c59baf08-780b-4898-afe1-e98886bb2059"); // data dummy
     super.onInit();
+    loadProfile();
   }
 
-  void fetchProfileById(String id) async {
+  // Memilih mana yang dipakai: login / dummy
+  String get activeUserId => loggedInUserId ?? dummyUserId;
+
+  // Load profile
+  Future<void> loadProfile() async {
     try {
       isLoading.value = true;
-      final data = await apiService.fetchProfileById(id);
+      final data = await apiService.fetchProfileById(activeUserId);
       profile.value = data;
     } catch (e) {
-      Get.snackbar('Error', e.toString());
+      Get.snackbar("Error", e.toString());
     } finally {
       isLoading.value = false;
     }
   }
 
-  void editProfile(String id, Profile profile) async {
+  // Update profile
+  Future<void> updateProfile(Profile newProfile) async {
     try {
-      await apiService.updateProfile(id, profile);
-      fetchProfileById(id);
+      await apiService.updateProfile(activeUserId, newProfile);
+      loadProfile(); // refresh
+      Get.snackbar("Success", "Profile updated");
     } catch (e) {
-      Get.snackbar('Error', e.toString());
+      Get.snackbar("Error", e.toString());
+    }
+  }
+
+  // Future<void> updateProfileImage(String filePath) async {
+  //   try {
+  //     await apiService.updateProfileImage(activeUserId, filePath);
+  //     await loadProfile();
+  //     Get.snackbar("Success", "Profile image updated");
+  //   } catch (e) {
+  //     Get.snackbar("Error", e.toString());
+  //   }
+  // }
+
+  // Change password
+  Future<void> changePassword(String oldPass, String newPass) async {
+    try {
+      await apiService.changePassword(
+        userId: activeUserId,
+        oldPassword: oldPass,
+        newPassword: newPass,
+      );
+      Get.snackbar("Success", "Password updated");
+    } catch (e) {
+      Get.snackbar("Error", e.toString());
     }
   }
 }
