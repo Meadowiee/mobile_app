@@ -1,13 +1,20 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/profile_model.dart';
+import 'dart:io';
 
 class ProfileApiService {
-  final String baseUrl = "http://13.251.130.212:3000";
+  static const bool local = true;
+  final String baseUrl = local
+      ? "http://192.168.18.23:3000"
+      : "http://13.251.130.212:3000";
 
-  final token =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImIyNTQ0ZWRjLWEzOTItNDEwZS05NmQ3LTU4ZDJkMzc3NGQ5ZiIsImVtYWlsIjoic2hhZmluYWFyZGVsaWEwQGdtYWlsLmNvbSIsImlhdCI6MTc2NTEyNjk3MSwiZXhwIjoxNzY3NzE4OTcxfQ.Rn31Mvmz37rGLP1ojc89BsPX27x_AsWFmvRvoSOuas0';
-  final user_Id = 'b2544edc-a392-410e-96d7-58d2d3774d9f';
+  final token = local
+      ? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjJkZjE3MzhlLWE5YTQtNDQ0Zi04NWY2LTRjOWVmZDFiM2MwYSIsImVtYWlsIjoieWVsbG93QGdtYWlsLmNvbSIsImlhdCI6MTc2NTc2NjU5NywiZXhwIjoxNzY4MzU4NTk3fQ.XVpvf760LO52gVhLHkUBCU8l6aHZGtmh_gbiLVKHcKU'
+      : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImIyNTQ0ZWRjLWEzOTItNDEwZS05NmQ3LTU4ZDJkMzc3NGQ5ZiIsImVtYWlsIjoic2hhZmluYWFyZGVsaWEwQGdtYWlsLmNvbSIsImlhdCI6MTc2NTEyNjk3MSwiZXhwIjoxNzY3NzE4OTcxfQ.Rn31Mvmz37rGLP1ojc89BsPX27x_AsWFmvRvoSOuas0';
+  final user_Id = local
+      ? '2df1738e-a9a4-444f-85f6-4c9efd1b3c0a'
+      : 'b2544edc-a392-410e-96d7-58d2d3774d9f';
 
   // GET detail user
   Future<Profile> fetchProfileById(String userId) async {
@@ -17,28 +24,49 @@ class ProfileApiService {
     );
 
     if (response.statusCode == 200) {
-      return Profile.fromJson(jsonDecode(response.body));
+      final json = jsonDecode(response.body);
+      if (json['profileImage'] != null &&
+          json['profileImage'].toString().startsWith('/')) {
+        json['profileImage'] = baseUrl + json['profileImage'];
+      }
+      print('here is the image ${json['profileImage']}');
+      return Profile.fromJson(json);
     } else {
       throw Exception("Failed to load profile");
     }
   }
 
   // UPDATE profile
-  Future<bool> updateProfile(String userId, Profile profile) async {
+  Future<bool> updateProfile(
+    String userId,
+    Profile profile, {
+    String? profileImage,
+  }) async {
     final url = Uri.parse("$baseUrl/users/detail/$user_Id");
-    final response = await http.put(
-      url,
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token",
-      },
-      body: jsonEncode(profile.toJson()),
-    );
+    var request = http.MultipartRequest('PUT', url);
+    request.headers['Authorization'] = 'Bearer $token';
+
+    if (profile.name != null) request.fields['name'] = profile.name!;
+    if (profile.username.isNotEmpty)
+      request.fields['username'] = profile.username;
+    if (profile.email != null) request.fields['email'] = profile.email!;
+    if (profile.region != null) request.fields['region'] = profile.region!;
+    if (profile.sex != null) request.fields['sex'] = profile.sex!;
+
+    if (profileImage != null && profileImage.isNotEmpty) {
+      request.files.add(
+        await http.MultipartFile.fromPath('profileImage', profileImage),
+      );
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
 
     if (response.statusCode == 200) {
       return true;
     } else {
-      throw Exception("Failed to update profile");
+      final errorBody = jsonDecode(response.body);
+      throw errorBody;
     }
   }
 
@@ -77,7 +105,8 @@ class ProfileApiService {
     if (response.statusCode == 200) {
       return true;
     } else {
-      throw Exception("Failed to change password");
+      final errorBody = jsonDecode(response.body);
+      throw errorBody;
     }
   }
 

@@ -45,6 +45,10 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                const Text(
+                  '',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
                 Container(
                   padding: const EdgeInsets.all(5.0),
                   decoration: const BoxDecoration(
@@ -54,10 +58,10 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
                   child: CircleAvatar(
                     backgroundColor: Colors.grey[100],
                     radius: 60,
-                    backgroundImage: profile.profile_image != null
-                        ? NetworkImage(profile.profile_image!)
+                    backgroundImage: profile.profileImage != null
+                        ? NetworkImage(profile.profileImage!)
                         : null,
-                    child: profile.profile_image == null
+                    child: profile.profileImage == null
                         ? const Icon(Icons.person, size: 70, color: Colors.grey)
                         : null,
                   ),

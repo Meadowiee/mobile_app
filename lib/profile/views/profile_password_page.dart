@@ -10,6 +10,7 @@ class ProfilePasswordPage extends StatefulWidget {
 }
 
 class _ProfilePasswordPageState extends State<ProfilePasswordPage> {
+  final RxString _confirmErrorText = ''.obs;
   final _formKey = GlobalKey<FormState>();
 
   final oldC = TextEditingController();
@@ -19,6 +20,12 @@ class _ProfilePasswordPageState extends State<ProfilePasswordPage> {
   bool oldObscure = true;
   bool newObscure = true;
   bool confirmObscure = true;
+
+  @override
+  void dispose() {
+    _confirmErrorText.close();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,48 +51,71 @@ class _ProfilePasswordPageState extends State<ProfilePasswordPage> {
 
           child: Form(
             key: _formKey,
-            child: Column(
-              children: [
-                passField("Old Password", oldC, oldObscure, () {
-                  setState(() => oldObscure = !oldObscure);
-                }),
-                const SizedBox(height: 20),
-
-                passField("New Password", newC, newObscure, () {
-                  setState(() => newObscure = !newObscure);
-                }),
-                const SizedBox(height: 20),
-
-                passField("Confirm Password", confirmC, confirmObscure, () {
-                  setState(() => confirmObscure = !confirmObscure);
-                }),
-                const SizedBox(height: 30),
-
-                ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      if (newC.text != confirmC.text) {
-                        Get.snackbar("Error", "Passwords do not match");
-                        return;
-                      }
-
-                      controller.changePassword(oldC.text, newC.text);
-
-                      Get.back();
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 50),
-                    backgroundColor: Theme.of(context).colorScheme.secondary,
-                    foregroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+            child: Obx(() {
+              final error = controller.validation;
+              String? getError(String field) => error[field];
+              String? confirmError = _confirmErrorText.value.isNotEmpty
+                  ? _confirmErrorText.value
+                  : null;
+              return Column(
+                children: [
+                  passField(
+                    "Old Password",
+                    oldC,
+                    oldObscure,
+                    () {
+                      setState(() => oldObscure = !oldObscure);
+                    },
+                    errorText: getError("oldPassword"),
                   ),
-                  child: const Text("Update Password"),
-                ),
-              ],
-            ),
+                  const SizedBox(height: 20),
+
+                  passField(
+                    "New Password",
+                    newC,
+                    newObscure,
+                    () {
+                      setState(() => newObscure = !newObscure);
+                    },
+                    errorText: getError("newPassword"),
+                  ),
+                  const SizedBox(height: 20),
+
+                  passField(
+                    "Confirm Password",
+                    confirmC,
+                    confirmObscure,
+                    () {
+                      setState(() => confirmObscure = !confirmObscure);
+                    },
+                    errorText: confirmError,
+                  ),
+                  const SizedBox(height: 30),
+
+                  ElevatedButton(
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        if (newC.text != confirmC.text) {
+                          _confirmErrorText.value = "Passwords do not match";
+                          return;
+                        }
+
+                        controller.changePassword(oldC.text, newC.text);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 50),
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text("Update Password"),
+                  ),
+                ],
+              );
+            }),
           ),
         ),
       ),
@@ -96,8 +126,9 @@ class _ProfilePasswordPageState extends State<ProfilePasswordPage> {
     String label,
     TextEditingController c,
     bool obscure,
-    VoidCallback toggle,
-  ) {
+    VoidCallback toggle, {
+    String? errorText,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -113,6 +144,12 @@ class _ProfilePasswordPageState extends State<ProfilePasswordPage> {
         TextFormField(
           controller: c,
           obscureText: obscure,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return "Field is required";
+            }
+            return null;
+          },
           decoration: InputDecoration(
             filled: true,
             fillColor: const Color(0xFFF7F7F7),
@@ -125,6 +162,7 @@ class _ProfilePasswordPageState extends State<ProfilePasswordPage> {
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
+            errorText: errorText,
           ),
         ),
       ],

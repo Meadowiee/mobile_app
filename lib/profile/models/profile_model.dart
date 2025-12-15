@@ -2,7 +2,7 @@ class Profile {
   final String? id;
   final String? name;
   final String? email;
-  final String? profile_image;
+  final String? profileImage;
   final String? sex;
   final String? region;
   final String? created_at;
@@ -15,7 +15,7 @@ class Profile {
     this.id,
     this.name,
     this.email,
-    this.profile_image,
+    this.profileImage,
     this.sex,
     this.region,
     this.created_at,
@@ -30,7 +30,7 @@ class Profile {
       id: json['id'],
       name: json['name'] as String?,
       email: json['email'] as String?,
-      profile_image: json['profile_image'] as String?,
+      profileImage: json['profileImage'] as String?,
       sex: json['sex'] as String?,
       region: json['region'] as String?,
       created_at: json['created_at'] as String?,
@@ -47,7 +47,7 @@ class Profile {
       'name': name,
       'email': email,
       'password': password,
-      'profile_image': profile_image,
+      'profileImage': profileImage,
       'sex': sex,
       'region': region,
       'username': username,
@@ -63,7 +63,7 @@ class Profile {
     String? email,
     String? sex,
     String? region,
-    String? profile_image,
+    String? profileImage,
     String? password,
   }) {
     return Profile(
@@ -74,7 +74,7 @@ class Profile {
       password: password ?? this.password,
       sex: sex ?? this.sex,
       region: region ?? this.region,
-      profile_image: profile_image ?? this.profile_image,
+      profileImage: profileImage ?? this.profileImage,
     );
   }
 }
