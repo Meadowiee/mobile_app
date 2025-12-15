@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../controllers/profile_controller.dart';
 import 'profile_edit_page.dart';
 import 'profile_password_page.dart';
+import '../../coffee-spot/views/coffee_spot_page.dart';
 
 class ProfileDetailPage extends StatefulWidget {
   const ProfileDetailPage({super.key});
@@ -257,7 +258,7 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
           if (index == 0) {
             // TODO: Navigate to Seman's Page
           } else if (index == 1) {
-            // TODO: Navigate to Coffee Page
+            Get.to(() => CoffeeSpotPage());
           }
         },
         destinations: const [

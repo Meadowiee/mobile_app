@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'coffee-spot/views/coffee_spot_page.dart';
+import 'coffee-spot/views/coffee_detail_spot_page.dart';
 import 'profile/models/profile_model.dart';
 import 'profile/views/profile_detail_page.dart';
 import 'profile/controllers/profile_controller.dart';

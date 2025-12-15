@@ -9,7 +9,7 @@ class ProfileController extends GetxController {
   var isLoading = false.obs;
 
   // Versi 1: tanpa login (dummy)
-  final String dummyUserId = "683f20f1-e97a-4483-af5c-bafeb3355d7a";
+  final String dummyUserId = "b2544edc-a392-410e-96d7-58d2d3774d9f";
 
   // Versi 2: kalau sudah login via token
   String? loggedInUserId;
