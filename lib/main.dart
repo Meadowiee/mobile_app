@@ -7,6 +7,7 @@ import 'profile/views/profile_detail_page.dart';
 import 'profile/controllers/profile_controller.dart';
 import 'auth/views/register_page.dart';
 import 'utils/session_manager.dart';
+import 'room-chat/views/room_chat_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,11 +26,11 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Brew Chat',
       debugShowCheckedModeBanner: false,
-      initialRoute: isLogged ? '/dashboard' : '/login',
+      initialRoute: isLogged ? '/home' : '/login',
       getPages: [
         GetPage(name: '/login', page: () => LoginPage()),
         GetPage(name: '/register', page: () => RegisterPage()),
-        // GetPage(name: '/dashboard', page: () => DashboardPage()),
+        GetPage(name: '/home', page: () =>RoomChatPage ()),
       ],
 
       theme: ThemeData(

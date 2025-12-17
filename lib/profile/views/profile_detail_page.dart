@@ -4,6 +4,7 @@ import '../controllers/profile_controller.dart';
 import 'profile_edit_page.dart';
 import 'profile_password_page.dart';
 import '../../coffee-spot/views/coffee_spot_page.dart';
+import '../../room-chat/views/room_chat_page.dart';
 
 class ProfileDetailPage extends StatefulWidget {
   const ProfileDetailPage({super.key});
@@ -260,7 +261,7 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
           setState(() => _selectedIndex = index);
 
           if (index == 0) {
-            // TODO: Navigate to Seman's Page
+            Get.to(() => RoomChatPage());
           } else if (index == 1) {
             Get.to(() => CoffeeSpotPage());
           }
