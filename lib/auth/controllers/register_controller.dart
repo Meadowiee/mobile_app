@@ -19,7 +19,7 @@ class RegisterController extends GetxController {
   var isObscure = true.obs;
   var isObscureConfirm = true.obs;
   var isLoading = false.obs;
-  
+
   // Data Selection
   var selectedSex = Rx<String?>(null);
   final List<String> sexOptions = ['male', 'female'];
@@ -55,17 +55,36 @@ class RegisterController extends GetxController {
   }
 
   void register() async {
-    // 1. Validasi Client Side (Konfirmasi Password)
-    if (passC.text != confirmPassC.text) {
-      Get.snackbar("Error", "Password confirmation does not match",
-          backgroundColor: Colors.red, colorText: Colors.white);
+    if (nameC.text.isEmpty ||
+        usernameC.text.isEmpty ||
+        emailC.text.isEmpty ||
+        regionC.text.isEmpty ||
+        passC.text.isEmpty ||
+        confirmPassC.text.isEmpty ||
+        selectedSex.value == null) {
+      Get.snackbar(
+        "Peringatan",
+        "Semua data wajib diisi!",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+      return;
+    }
+if (passC.text != confirmPassC.text) {
+      Get.snackbar(
+        "Error",
+        "Password confirmation does not match",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       return;
     }
 
     isLoading.value = true;
-    validationErrors.clear(); // Reset error lama
+    validationErrors.clear();
 
-    // 2. Panggil Service
+    // 4. Panggil Service
     var result = await _registerService.register(
       name: nameC.text,
       username: usernameC.text,
@@ -78,19 +97,26 @@ class RegisterController extends GetxController {
 
     isLoading.value = false;
 
-    // 3. Handle Response
+    // 5. Handle Response
     if (result['success']) {
       Get.snackbar("Success", "Account created successfully!");
-      Get.offAllNamed('/login'); // Pindah ke halaman Login
+      Get.offAllNamed('/login');
     } else {
       if (result['errors'] != null) {
         validationErrors.value = result['errors'];
-        Get.snackbar("Registration Failed", "Please check your input",
-            backgroundColor: Colors.redAccent, colorText: Colors.white);
+        Get.snackbar(
+          "Registration Failed",
+          "Please check your input",
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+        );
       } else {
-        // Error Global (Server mati, dll)
-        Get.snackbar("Error", result['message'] ?? "Unknown Error",
-             backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar(
+          "Error",
+          result['message'] ?? "Unknown Error",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
     }
   }
