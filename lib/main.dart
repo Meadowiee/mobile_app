@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mobile_app/auth/views/login_page.dart';
 
 import 'coffee-spot/views/coffee_spot_page.dart';
 import 'profile/models/profile_model.dart';
 import 'profile/views/profile_detail_page.dart';
 import 'profile/controllers/profile_controller.dart';
+import 'auth/views/register_page.dart';
+import 'utils/session_manager.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  bool isLogged = await SessionManager().isLoggedIn();
+  runApp(MyApp(isLogged: isLogged));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool isLogged;
+
+  const MyApp({super.key, required this.isLogged});
   @override
   Widget build(BuildContext context) {
     Get.put(ProfileController());
@@ -19,6 +26,12 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Brew Chat',
       debugShowCheckedModeBanner: false,
+      initialRoute: isLogged ? '/dashboard' : '/login',
+      getPages: [
+        GetPage(name: '/login', page: () => LoginPage()),
+        GetPage(name: '/register', page: () => RegisterPage()),
+        GetPage(name: '/dashboard', page: () => DashboardPage()),
+      ],
 
       theme: ThemeData(
         useMaterial3: true,
@@ -57,9 +70,7 @@ class MyApp extends StatelessWidget {
         // Bottom Navigation Bar theme
         navigationBarTheme: NavigationBarThemeData(
           backgroundColor: Colors.white,
-          indicatorColor: const Color(
-            0xFFC9F158,
-          ).withOpacity(0.15), // soft green selection
+          indicatorColor: const Color(0xFFC9F158).withOpacity(0.15),
           labelTextStyle: MaterialStateProperty.all(
             const TextStyle(fontSize: 14, color: Colors.black),
           ),
@@ -68,7 +79,6 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: ProfileDetailPage(),
     );
   }
 }
