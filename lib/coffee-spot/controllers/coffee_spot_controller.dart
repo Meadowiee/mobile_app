@@ -1,23 +1,21 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../services/coffee_spot_api_service.dart';
 import '../models/coffee_spot_model.dart';
 import '../models/spot_check_model.dart';
-
-const String currentUserId = "683f20f1-e97a-4483-af5c-bafeb3355d7a";
+import '../../utils/session_manager.dart';
 
 class CoffeeSpotController extends GetxController {
   final CoffeeSpotApiService _apiService = CoffeeSpotApiService();
+  final SessionManager sessionManager = SessionManager();
 
-  // Lists
   var allCoffeeSpotList = <CoffeeSpot>[].obs;
   var filteredCoffeeSpotList = <CoffeeSpot>[].obs;
   var favoriteSpotList = <SpotCheck>[].obs;
   var recentSpotList = <SpotCheck>[].obs;
 
-  // States
   var isLoading = true.obs;
   var errorMessage = ''.obs;
-
   var placeholderImage = 'assets/images/coffee-placeholder.jpg';
 
   @override
@@ -27,19 +25,27 @@ class CoffeeSpotController extends GetxController {
   }
 
   Future<void> fetchAllData() async {
-    isLoading(true);
+    isLoading = true.obs;
     errorMessage('');
     try {
-      final spots = await _apiService.getCoffeeSpots();
-      allCoffeeSpotList.assignAll(spots);
-      filteredCoffeeSpotList.assignAll(spots);
+      String? token = await sessionManager.getToken();
+      print('Im here after $token');
 
-      await getFavoriteCoffeeSpots();
+      if (token != null) {
+        final spots = await _apiService.getCoffeeSpots(token);
+        allCoffeeSpotList.assignAll(spots);
+        filteredCoffeeSpotList.assignAll(spots);
+        await getFavoriteCoffeeSpots();
+      }
     } catch (e) {
-      errorMessage('Gagal mengambil data: $e');
-      print('Error fetching data: $e');
+      Get.snackbar(
+        "Error",
+        "Sorry, something went wrong.",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     } finally {
-      isLoading(false);
+      isLoading = false.obs;
     }
   }
 
@@ -62,12 +68,21 @@ class CoffeeSpotController extends GetxController {
   // get favorite coffee spots for current user
   Future<void> getFavoriteCoffeeSpots() async {
     try {
-      final favorites = await _apiService.getFavoriteSpots(currentUserId);
-      favoriteSpotList.assignAll(favorites);
+      String? userId = await sessionManager.getUserId();
+      String? token = await sessionManager.getToken();
 
-      getRecentCoffeeSpots();
+      if (userId != null && token != null) {
+        final favorites = await _apiService.getFavoriteSpots(userId, token);
+        favoriteSpotList.assignAll(favorites);
+        getRecentCoffeeSpots();
+      }
     } catch (e) {
-      print('Error fetching favorite spots: $e');
+      Get.snackbar(
+        "Error",
+        "Sorry, something went wrong.",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 
@@ -86,9 +101,12 @@ class CoffeeSpotController extends GetxController {
         (spotCheck) => spotCheck.spotId == spotId,
       );
 
+      String? token = await sessionManager.getToken();
+      String? userId = await sessionManager.getUserId();
+
       SpotCheck updatedSpotCheck;
 
-      if (existingSpotCheck != null) {
+      if (existingSpotCheck != null && token != null) {
         final newVisitCount = existingSpotCheck.visitCount + 1;
         final updateInput = SpotCheckUpdateInput(
           lastVisit: DateTime.now(),
@@ -96,12 +114,14 @@ class CoffeeSpotController extends GetxController {
         );
 
         updatedSpotCheck = await _apiService.editSpotCheck(
+          token: token,
           spotCheckId: existingSpotCheck.id,
           input: updateInput,
         );
-      } else {
+      } else if (userId != null && token != null) {
         updatedSpotCheck = await _apiService.addFavoriteSpot(
-          userId: currentUserId,
+          token: token,
+          userId: userId,
           spotId: spotId,
         );
 
@@ -119,20 +139,37 @@ class CoffeeSpotController extends GetxController {
 
       getFavoriteCoffeeSpots();
     } catch (e) {
-      print('Check-in error: $e');
+      Get.snackbar(
+        "Error",
+        "Sorry, something went wrong.",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 
   // delete a spot check
   Future<void> deleteCheckIn(String spotCheckId) async {
     try {
-      await _apiService.deleteSpotCheck(spotCheckId);
+      String? token = await sessionManager.getToken();
+      String? userId = await sessionManager.getUserId();
 
-      favoriteSpotList.removeWhere((spotCheck) => spotCheck.id == spotCheckId);
+      if (token != null || userId != null) {
+        await _apiService.deleteSpotCheck(token!, spotCheckId);
 
-      getRecentCoffeeSpots();
+        favoriteSpotList.removeWhere(
+          (spotCheck) => spotCheck.id == spotCheckId,
+        );
+
+        getRecentCoffeeSpots();
+      }
     } catch (e) {
-      print('Delete check-in error: $e');
+      Get.snackbar(
+        "Error",
+        "Sorry, something went wrong.",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 }

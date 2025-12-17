@@ -2,19 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/profile_model.dart';
 import '../services/profile_api_service.dart';
+import '../../utils/session_manager.dart';
 
 class ProfileController extends GetxController {
   final ProfileApiService apiService = ProfileApiService();
+  final SessionManager sessionManager = SessionManager();
 
-  var validation = RxMap<String, String>({});
   var profile = Rx<Profile?>(null);
   var isLoading = false.obs;
-
-  // Versi 1: tanpa login (dummy)
-  final String dummyUserId = "b2544edc-a392-410e-96d7-58d2d3774d9f";
-
-  // Versi 2: kalau sudah login via token
-  String? loggedInUserId;
+  var validation = RxMap<String, String>({});
 
   @override
   void onInit() {
@@ -22,16 +18,27 @@ class ProfileController extends GetxController {
     loadProfile();
   }
 
-  String get activeUserId => loggedInUserId ?? dummyUserId;
-
   // Load profile
   Future<void> loadProfile() async {
     try {
       isLoading.value = true;
-      final data = await apiService.fetchProfileById(activeUserId);
-      profile.value = data;
+
+      String? token = await sessionManager.getToken();
+      String? userId = await sessionManager.getUserId();
+
+      if (token != null && userId != null) {
+        final data = await apiService.fetchProfileById(userId, token);
+        profile.value = data;
+      } else {
+        Get.offAllNamed('/login');
+      }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      Get.snackbar(
+        "Error",
+        "Failed to load profile",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     } finally {
       isLoading.value = false;
     }
@@ -42,48 +49,55 @@ class ProfileController extends GetxController {
     validation.clear();
     isLoading.value = true;
     try {
-      await apiService.updateProfile(
-        activeUserId,
-        newProfile,
-        profileImage: profileImage,
-      );
-      await loadProfile();
-      Get.back();
-      Get.snackbar("Success", "Profile updated");
+      String? token = await sessionManager.getToken();
+      String? userId = await sessionManager.getUserId();
+
+      if (token != null && userId != null) {
+        await apiService.updateProfile(
+          userId,
+          token,
+          newProfile,
+          profileImage: profileImage,
+        );
+        await loadProfile();
+        Get.back();
+        Get.snackbar(
+          "Success",
+          "Profile updated",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+      }
     } catch (e) {
-      print(e);
       if (e is Map<String, dynamic> &&
           e['statusCode'] == 422 &&
           e['data'] != null) {
-        print(e);
         final data = e['data'] as Map<String, dynamic>;
-
         data.forEach((fieldKey, errorDetail) {
           if (errorDetail is Map<String, dynamic> &&
               errorDetail['message'] != null) {
             validation[fieldKey] = errorDetail['message'];
           }
         });
-        print(validation);
       } else if (e is Map<String, dynamic> && e['message'] != null) {
-        Get.snackbar("Error", e['message']);
+        Get.snackbar(
+          "Error",
+          "Sorry, we couldn't update your profile at the moment.",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       } else {
-        Get.snackbar("Error", "An unexpected error occurred.");
+        Get.snackbar(
+          "Error",
+          "An unexpected error occurred.",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
     } finally {
       isLoading.value = false;
     }
   }
-
-  // Future<void> updateProfileImage(String filePath) async {
-  //   try {
-  //     await apiService.updateProfileImage(activeUserId, filePath);
-  //     await loadProfile();
-  //     Get.snackbar("Success", "Profile image updated");
-  //   } catch (e) {
-  //     Get.snackbar("Error", e.toString());
-  //   }
-  // }
 
   // Change password
   Future<void> changePassword(String oldPass, String newPass) async {
@@ -91,13 +105,23 @@ class ProfileController extends GetxController {
     isLoading.value = true;
 
     try {
-      await apiService.changePassword(
-        userId: activeUserId,
-        oldPassword: oldPass,
-        newPassword: newPass,
-      );
-      Get.back();
-      Get.snackbar("Success", "Password updated successfully!");
+      String? token = await sessionManager.getToken();
+      String? userId = await sessionManager.getUserId();
+      if (token != null && userId != null) {
+        await apiService.changePassword(
+          userId: userId,
+          token: token,
+          oldPassword: oldPass,
+          newPassword: newPass,
+        );
+        Get.back();
+        Get.snackbar(
+          "Success",
+          "Password updated successfully!",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+      }
     } catch (e) {
       if (e is Map<String, dynamic> &&
           e['statusCode'] == 422 &&
@@ -111,13 +135,27 @@ class ProfileController extends GetxController {
           }
         });
       } else if (e is Map<String, dynamic> && e['message'] != null) {
-        Get.snackbar("Error", e['message']);
+        Get.snackbar(
+          "Error",
+          "Sorry, we couldn't change your password at the moment.",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       } else {
-        // Handle network or other unexpected errors
-        Get.snackbar("Error", "An unexpected error occurred.");
+        Get.snackbar(
+          "Error",
+          "An unexpected error occurred.",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
     } finally {
       isLoading.value = false;
     }
+  }
+
+  Future<void> logout() async {
+    await SessionManager().clearSession();
+    Get.offAllNamed('/login');
   }
 }

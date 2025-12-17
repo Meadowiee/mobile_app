@@ -18,15 +18,16 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<ProfileController>();
-
     return Scaffold(
+      backgroundColor: Color(0xFFF2F3F5),
       appBar: AppBar(
         title: const Text(
           'Profile',
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
         ),
         centerTitle: true,
+        backgroundColor: Color(0xFFF2F3F5),
       ),
 
       body: Obx(() {
@@ -45,26 +46,27 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const Text(
-                  '',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
+                const SizedBox(height: 20),
                 Container(
-                  padding: const EdgeInsets.all(5.0),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                  ),
-                  child: CircleAvatar(
-                    backgroundColor: Colors.grey[100],
-                    radius: 60,
-                    backgroundImage: profile.profileImage != null
-                        ? NetworkImage(profile.profileImage!)
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.secondary,
+                      width: 2,
+                    ),
+                    color: Colors.grey[200],
+                    image: profile.profileImage != null
+                        ? DecorationImage(
+                            image: NetworkImage(profile.profileImage!),
+                            fit: BoxFit.cover,
+                          )
                         : null,
-                    child: profile.profileImage == null
-                        ? const Icon(Icons.person, size: 70, color: Colors.grey)
-                        : null,
                   ),
+                  child: profile.profileImage == null
+                      ? const Icon(Icons.person, size: 60, color: Colors.grey)
+                      : null,
                 ),
 
                 const SizedBox(height: 40),
@@ -85,7 +87,7 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            "Personal info",
+                            "Your Profile",
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -93,11 +95,11 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
                           ),
                           InkWell(
                             onTap: () => Get.to(() => ProfileEditPage()),
-                            child: const Text(
+                            child: Text(
                               "Edit",
                               style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.blue,
+                                color: Theme.of(context).colorScheme.secondary,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -105,7 +107,7 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
                         ],
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 22),
 
                       const Text(
                         "Name",
@@ -121,7 +123,7 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
                           const Icon(Icons.person_outline, size: 22),
                           const SizedBox(width: 12),
                           Text(
-                            profile.name ?? "Unknown",
+                            profile.name ?? "-",
                             style: const TextStyle(fontSize: 16),
                           ),
                         ],
@@ -165,29 +167,7 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
                           const Icon(Icons.email_outlined, size: 22),
                           const SizedBox(width: 12),
                           Text(
-                            profile.email ?? "Unknown",
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 22),
-
-                      const Text(
-                        "Gender",
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Icon(Icons.transgender, size: 22),
-                          const SizedBox(width: 12),
-                          Text(
-                            profile.sex ?? "Unknown",
+                            profile.email ?? "-",
                             style: const TextStyle(fontSize: 16),
                           ),
                         ],
@@ -206,15 +186,37 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          const Icon(Icons.location_on, size: 22),
+                          const Icon(Icons.map_outlined, size: 22),
                           const SizedBox(width: 12),
                           Text(
-                            profile.region ?? "Unknown",
+                            profile.region ?? "-",
                             style: const TextStyle(fontSize: 16),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 22),
+
+                      const Text(
+                        "Gender",
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(Icons.wc, size: 22),
+                          const SizedBox(width: 12),
+                          Text(
+                            profile.sex ?? "-",
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 40),
 
                       ElevatedButton(
                         onPressed: () {
@@ -228,7 +230,7 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
                           backgroundColor: Theme.of(
                             context,
                           ).colorScheme.secondary,
-                          foregroundColor: Colors.black,
+                          foregroundColor: Colors.white,
                         ),
                         child: const Text("Change Password"),
                       ),
@@ -236,7 +238,9 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
                       const SizedBox(height: 10),
 
                       OutlinedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          controller.logout();
+                        },
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 50),
                           shape: RoundedRectangleBorder(

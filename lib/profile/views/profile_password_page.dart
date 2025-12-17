@@ -10,7 +10,7 @@ class ProfilePasswordPage extends StatefulWidget {
 }
 
 class _ProfilePasswordPageState extends State<ProfilePasswordPage> {
-  final RxString _confirmErrorText = ''.obs;
+  final controller = Get.find<ProfileController>();
   final _formKey = GlobalKey<FormState>();
 
   final oldC = TextEditingController();
@@ -23,21 +23,20 @@ class _ProfilePasswordPageState extends State<ProfilePasswordPage> {
 
   @override
   void dispose() {
-    _confirmErrorText.close();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<ProfileController>();
-
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           "Change Password",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
+        backgroundColor: Colors.white,
       ),
 
       body: SingleChildScrollView(
@@ -54,9 +53,6 @@ class _ProfilePasswordPageState extends State<ProfilePasswordPage> {
             child: Obx(() {
               final error = controller.validation;
               String? getError(String field) => error[field];
-              String? confirmError = _confirmErrorText.value.isNotEmpty
-                  ? _confirmErrorText.value
-                  : null;
               return Column(
                 children: [
                   passField(
@@ -88,25 +84,28 @@ class _ProfilePasswordPageState extends State<ProfilePasswordPage> {
                     () {
                       setState(() => confirmObscure = !confirmObscure);
                     },
-                    errorText: confirmError,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return "Field is required";
+                      }
+                      if (value != newC.text) {
+                        return "Passwords do not match";
+                      }
+                      return null;
+                    },
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 40),
 
                   ElevatedButton(
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
-                        if (newC.text != confirmC.text) {
-                          _confirmErrorText.value = "Passwords do not match";
-                          return;
-                        }
-
                         controller.changePassword(oldC.text, newC.text);
                       }
                     },
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 50),
                       backgroundColor: Theme.of(context).colorScheme.secondary,
-                      foregroundColor: Colors.black,
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -128,44 +127,67 @@ class _ProfilePasswordPageState extends State<ProfilePasswordPage> {
     bool obscure,
     VoidCallback toggle, {
     String? errorText,
+    String? Function(String?)? validator,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.grey,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 8),
         TextFormField(
           controller: c,
           obscureText: obscure,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return "Field is required";
-            }
-            return null;
-          },
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: const Color(0xFFF7F7F7),
-            prefixIcon: const Icon(Icons.lock_outline),
-            suffixIcon: IconButton(
-              icon: Icon(obscure ? Icons.visibility_off : Icons.visibility),
-              onPressed: toggle,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            errorText: errorText,
-          ),
+          validator:
+              validator ??
+              (value) {
+                if (value == null || value.isEmpty) {
+                  return "Field is required";
+                }
+                return null;
+              },
+          decoration: _inputDecoration(context, label, Icons.lock_outline)
+              .copyWith(
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    obscure ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.grey,
+                  ),
+                  onPressed: toggle,
+                ),
+              ),
         ),
       ],
+    );
+  }
+
+  InputDecoration _inputDecoration(
+    BuildContext context,
+    String label,
+    IconData icon,
+  ) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: Colors.grey),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.grey),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.grey),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: Theme.of(context).colorScheme.secondary,
+          width: 2,
+        ),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.red),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      fillColor: Colors.white,
+      filled: true,
     );
   }
 }

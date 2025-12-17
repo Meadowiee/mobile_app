@@ -49,8 +49,12 @@ class LoginController extends GetxController {
           response.user!.id,
         );
 
-        Get.snackbar("Sukses", "Login Berhasil",
-            backgroundColor: Colors.green, colorText: Colors.white);
+        Get.snackbar(
+          "Sukses",
+          "Login Berhasil",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
         Get.offAllNamed('/dashboard');
       }
     } else {

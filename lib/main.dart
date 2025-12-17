@@ -9,6 +9,7 @@ import 'auth/views/register_page.dart';
 import 'utils/session_manager.dart';
 
 void main() async {
+  Get.put(ProfileController());
   WidgetsFlutterBinding.ensureInitialized();
   bool isLogged = await SessionManager().isLoggedIn();
   runApp(MyApp(isLogged: isLogged));
@@ -20,8 +21,6 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key, required this.isLogged});
   @override
   Widget build(BuildContext context) {
-    Get.put(ProfileController());
-
     return GetMaterialApp(
       title: 'Brew Chat',
       debugShowCheckedModeBanner: false,
@@ -29,7 +28,7 @@ class MyApp extends StatelessWidget {
       getPages: [
         GetPage(name: '/login', page: () => LoginPage()),
         GetPage(name: '/register', page: () => RegisterPage()),
-        // GetPage(name: '/dashboard', page: () => DashboardPage()),
+        GetPage(name: '/dashboard', page: () => ProfileDetailPage()),
       ],
 
       theme: ThemeData(
@@ -46,13 +45,13 @@ class MyApp extends StatelessWidget {
           onError: Colors.white,
           background: Colors.white,
           onBackground: Colors.black,
-          surface: Color(0xFFF2F3F5),
+          surface: Colors.white,
           onSurface: Colors.black,
         ),
 
         // AppBar theme
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFFF2F3F5),
+          backgroundColor: Colors.white,
           foregroundColor: Colors.black,
         ),
 

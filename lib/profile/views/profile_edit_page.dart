@@ -17,10 +17,10 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   late TextEditingController nameC;
   late TextEditingController usernameC;
   late TextEditingController emailC;
-  late TextEditingController genderC;
   late TextEditingController regionC;
 
   String? _selectedImagePath;
+  String? selectedGender;
 
   @override
   void initState() {
@@ -30,8 +30,17 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     nameC = TextEditingController(text: profile?.name ?? "");
     usernameC = TextEditingController(text: profile?.username ?? "");
     emailC = TextEditingController(text: profile?.email ?? "");
-    genderC = TextEditingController(text: profile?.sex ?? "");
     regionC = TextEditingController(text: profile?.region ?? "");
+    selectedGender = profile?.sex;
+  }
+
+  @override
+  void dispose() {
+    nameC.dispose();
+    usernameC.dispose();
+    emailC.dispose();
+    regionC.dispose();
+    super.dispose();
   }
 
   @override
@@ -39,23 +48,20 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     final controller = Get.find<ProfileController>();
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           "Edit Profile",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
+        backgroundColor: Colors.white,
       ),
 
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(15),
+        padding: const EdgeInsets.all(20),
         child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-          ),
-
+          color: Colors.white,
           child: Form(
             key: _formKey,
             child: Obx(() {
@@ -63,42 +69,8 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
               String? getError(String field) => error[field];
               return Column(
                 children: [
-                  const SizedBox(height: 10),
-                  GestureDetector(
-                    onTap: () async {
-                      final ImagePicker picker = ImagePicker();
-                      final XFile? img = await picker.pickImage(
-                        source: ImageSource.gallery,
-                      );
-
-                      if (img != null) {
-                        setState(() {
-                          _selectedImagePath = img.path;
-                        });
-                      }
-                    },
-                    child: CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.grey[200],
-                      backgroundImage: _selectedImagePath != null
-                          ? FileImage(File(_selectedImagePath!))
-                          : controller.profile.value?.profileImage != null
-                          ? NetworkImage(
-                              controller.profile.value!.profileImage!,
-                            )
-                          : null,
-                      child:
-                          controller.profile.value?.profileImage == null &&
-                              _selectedImagePath == null
-                          ? const Icon(
-                              Icons.camera_alt,
-                              size: 40,
-                              color: Colors.grey,
-                            )
-                          : null,
-                    ),
-                  ),
-                  const SizedBox(height: 25),
+                  buildAvatar(controller),
+                  const SizedBox(height: 40),
 
                   buildField(
                     "Name",
@@ -106,30 +78,30 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                     nameC,
                     getError("name"),
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 20),
                   buildField(
                     "Username",
                     Icons.alternate_email,
                     usernameC,
                     getError("username"),
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 20),
                   buildField(
                     "E-mail",
                     Icons.email_outlined,
                     emailC,
                     getError("email"),
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 20),
                   buildGenderDropdown(),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 20),
                   buildField(
                     "Region",
                     Icons.location_on,
                     regionC,
                     getError("region"),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 40),
 
                   // SAVE BUTTON
                   ElevatedButton(
@@ -139,7 +111,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                           name: nameC.text,
                           username: usernameC.text,
                           email: emailC.text,
-                          sex: genderC.text,
+                          sex: selectedGender,
                           region: regionC.text,
                         );
                         await controller.updateProfile(
@@ -173,32 +145,9 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     TextEditingController c,
     String? errorText,
   ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.grey,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: c,
-          decoration: InputDecoration(
-            prefixIcon: Icon(icon),
-            filled: true,
-            fillColor: const Color(0xFFF7F7F7),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            errorText: errorText,
-          ),
-        ),
-      ],
+    return TextFormField(
+      controller: c,
+      decoration: _inputDecoration(context, label, icon, errorText),
     );
   }
 
@@ -206,40 +155,125 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "Gender",
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 8),
-
         DropdownButtonFormField<String>(
-          value:
-              genderC.text.isEmpty ||
-                  (genderC.text != 'female' && genderC.text != 'male')
-              ? null
-              : genderC.text,
+          value: selectedGender != null && selectedGender!.isNotEmpty
+              ? selectedGender!.toLowerCase()
+              : null,
           items: const [
             DropdownMenuItem(value: "male", child: Text("Male")),
             DropdownMenuItem(value: "female", child: Text("Female")),
           ],
           onChanged: (value) {
-            genderC.text = value?.toLowerCase() ?? "";
+            setState(() {
+              selectedGender = value;
+            });
           },
-          decoration: InputDecoration(
-            prefixIcon: const Icon(Icons.transgender),
-            filled: true,
-            fillColor: const Color(0xFFF7F7F7),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+          decoration: _inputDecoration(context, "Gender", Icons.wc, null),
+        ),
+      ],
+    );
+  }
+
+  Widget buildAvatar(ProfileController controller) {
+    return Stack(
+      children: [
+        Container(
+          width: 100,
+          height: 100,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: Theme.of(context).colorScheme.secondary,
+              width: 2,
+            ),
+            color: Colors.grey[200],
+            image: _selectedImagePath != null
+                ? DecorationImage(
+                    image: FileImage(File(_selectedImagePath!)),
+                    fit: BoxFit.cover,
+                  )
+                : controller.profile.value?.profileImage != null
+                ? DecorationImage(
+                    image: NetworkImage(
+                      controller.profile.value!.profileImage!,
+                    ),
+                    fit: BoxFit.cover,
+                  )
+                : null,
+          ),
+          child:
+              _selectedImagePath == null &&
+                  controller.profile.value?.profileImage == null
+              ? const Icon(Icons.person, size: 60, color: Colors.grey)
+              : null,
+        ),
+
+        Positioned(
+          bottom: 0,
+          right: 0,
+          child: GestureDetector(
+            onTap: () async {
+              final ImagePicker picker = ImagePicker();
+              final XFile? img = await picker.pickImage(
+                source: ImageSource.gallery,
+              );
+
+              if (img != null) {
+                setState(() {
+                  _selectedImagePath = img.path;
+                });
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Theme.of(context).colorScheme.secondary,
+              ),
+              child: const Icon(
+                Icons.camera_alt,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
           ),
         ),
       ],
+    );
+  }
+
+  InputDecoration _inputDecoration(
+    BuildContext context,
+    String label,
+    IconData icon,
+    String? errorText,
+  ) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: Colors.grey),
+      errorText: errorText,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.grey),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.grey),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: Theme.of(context).colorScheme.secondary,
+          width: 2,
+        ),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.red),
+      ),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );
   }
 }
