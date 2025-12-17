@@ -4,13 +4,9 @@ import '../models/coffee_spot_model.dart';
 import '../models/spot_check_model.dart';
 
 class CoffeeSpotApiService {
-  final String baseUrl = 'http://13.251.130.212:3000';
-  final token =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImIyNTQ0ZWRjLWEzOTItNDEwZS05NmQ3LTU4ZDJkMzc3NGQ5ZiIsImVtYWlsIjoic2hhZmluYWFyZGVsaWEwQGdtYWlsLmNvbSIsImlhdCI6MTc2NTEyNjk3MSwiZXhwIjoxNzY3NzE4OTcxfQ.Rn31Mvmz37rGLP1ojc89BsPX27x_AsWFmvRvoSOuas0';
-  final user_Id = 'b2544edc-a392-410e-96d7-58d2d3774d9f';
+  final String baseUrl = 'http://18.143.199.169:3000';
 
-  Future<List<CoffeeSpot>> getCoffeeSpots() async {
-    // put the bearer token in the header
+  Future<List<CoffeeSpot>> getCoffeeSpots(String token) async {
     final response = await http.get(
       Uri.parse('$baseUrl/coffee-spot'),
       headers: {'Authorization': 'Bearer $token'},
@@ -25,7 +21,7 @@ class CoffeeSpotApiService {
     }
   }
 
-  Future<CoffeeSpot> getCoffeeSpotById(String spotId) async {
+  Future<CoffeeSpot> getCoffeeSpotById(String token, String spotId) async {
     final response = await http.get(
       Uri.parse('$baseUrl/coffee-spot/$spotId'),
       headers: {'Authorization': 'Bearer $token'},
@@ -42,6 +38,7 @@ class CoffeeSpotApiService {
 
   Future<SpotCheck> addFavoriteSpot({
     required String userId,
+    required String token,
     required String spotId,
   }) async {
     final response = await http.post(
@@ -50,7 +47,7 @@ class CoffeeSpotApiService {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: json.encode({'userId': user_Id, 'spotId': spotId}),
+      body: json.encode({'userId': userId, 'spotId': spotId}),
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
@@ -62,9 +59,9 @@ class CoffeeSpotApiService {
     }
   }
 
-  Future<List<SpotCheck>> getFavoriteSpots(String userId) async {
+  Future<List<SpotCheck>> getFavoriteSpots(String userId, String token) async {
     final response = await http.get(
-      Uri.parse('$baseUrl/coffee-spot/favorite/$user_Id'),
+      Uri.parse('$baseUrl/coffee-spot/favorite/$userId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -79,6 +76,7 @@ class CoffeeSpotApiService {
   }
 
   Future<SpotCheck> editSpotCheck({
+    required String token,
     required String spotCheckId,
     required SpotCheckUpdateInput input,
   }) async {
@@ -100,7 +98,7 @@ class CoffeeSpotApiService {
     }
   }
 
-  Future<void> deleteSpotCheck(String spotCheckId) async {
+  Future<void> deleteSpotCheck(String token, String spotCheckId) async {
     final response = await http.delete(
       Uri.parse('$baseUrl/coffee-spot/favorite/$spotCheckId'),
       headers: {'Authorization': 'Bearer $token'},

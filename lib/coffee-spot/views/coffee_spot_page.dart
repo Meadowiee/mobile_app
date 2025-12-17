@@ -20,6 +20,7 @@ class _CoffeeSpotPageState extends State<CoffeeSpotPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           'Coffee Spots',
@@ -28,12 +29,13 @@ class _CoffeeSpotPageState extends State<CoffeeSpotPage> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.favorite),
+            icon: const Icon(Icons.favorite, color: Colors.red),
             onPressed: () {
               Get.to(() => const CoffeeFavoritePage());
             },
           ),
         ],
+        backgroundColor: Colors.white,
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
@@ -104,6 +106,7 @@ class _CoffeeSpotPageState extends State<CoffeeSpotPage> {
                         minHeight: 100,
                       ),
                       child: Card(
+                        color: Colors.white,
                         elevation: 2,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -248,7 +251,7 @@ class _CoffeeSpotPageState extends State<CoffeeSpotPage> {
             if (spot == null) return const SizedBox.shrink();
             return Card(
               elevation: 4,
-              color: Theme.of(context).colorScheme.surface,
+              color: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),

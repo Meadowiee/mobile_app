@@ -10,6 +10,7 @@ import 'utils/session_manager.dart';
 import 'room-chat/views/room_chat_page.dart';
 
 void main() async {
+  Get.put(ProfileController());
   WidgetsFlutterBinding.ensureInitialized();
   bool isLogged = await SessionManager().isLoggedIn();
   runApp(MyApp(isLogged: isLogged));
@@ -21,8 +22,6 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key, required this.isLogged});
   @override
   Widget build(BuildContext context) {
-    Get.put(ProfileController());
-
     return GetMaterialApp(
       title: 'Brew Chat',
       debugShowCheckedModeBanner: false,
@@ -47,13 +46,13 @@ class MyApp extends StatelessWidget {
           onError: Colors.white,
           background: Colors.white,
           onBackground: Colors.black,
-          surface: Color(0xFFF2F3F5),
+          surface: Colors.white,
           onSurface: Colors.black,
         ),
 
         // AppBar theme
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFFF2F3F5),
+          backgroundColor: Colors.white,
           foregroundColor: Colors.black,
         ),
 

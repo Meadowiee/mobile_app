@@ -311,9 +311,8 @@ class RegisterPage extends StatelessWidget {
   }
 
   // --- UI HELPER ---
-  // Saya menambahkan parameter 'BuildContext context' agar bisa akses Theme
   InputDecoration _inputDecoration(
-    BuildContext context, // <--- Tambahan
+    BuildContext context,
     String label,
     IconData icon,
     String errorKey,
