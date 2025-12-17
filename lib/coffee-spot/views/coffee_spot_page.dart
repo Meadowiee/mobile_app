@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../controllers/coffee_spot_controller.dart';
 import 'coffee_favourite_page.dart';
 import '../../profile/views/profile_detail_page.dart';
+import '../../room-chat/views/room_chat_page.dart';
 
 class CoffeeSpotPage extends StatefulWidget {
   @override
@@ -173,7 +174,7 @@ class _CoffeeSpotPageState extends State<CoffeeSpotPage> {
           setState(() => _selectedIndex = index);
 
           if (index == 0) {
-            // TODO: Navigate to Seman's Page
+            Get.to(() => RoomChatPage());
           } else if (index == 2) {
             Get.to(() => ProfileDetailPage());
           }
