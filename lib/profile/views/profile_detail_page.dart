@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../controllers/profile_controller.dart';
 import 'profile_edit_page.dart';
 import 'profile_password_page.dart';
+import '../../coffee-spot/views/coffee_spot_page.dart';
 
 class ProfileDetailPage extends StatefulWidget {
   const ProfileDetailPage({super.key});
@@ -44,6 +45,10 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                const Text(
+                  '',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
                 Container(
                   padding: const EdgeInsets.all(5.0),
                   decoration: const BoxDecoration(
@@ -53,10 +58,10 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
                   child: CircleAvatar(
                     backgroundColor: Colors.grey[100],
                     radius: 60,
-                    backgroundImage: profile.profile_image != null
-                        ? NetworkImage(profile.profile_image!)
+                    backgroundImage: profile.profileImage != null
+                        ? NetworkImage(profile.profileImage!)
                         : null,
-                    child: profile.profile_image == null
+                    child: profile.profileImage == null
                         ? const Icon(Icons.person, size: 70, color: Colors.grey)
                         : null,
                   ),
@@ -257,7 +262,7 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
           if (index == 0) {
             // TODO: Navigate to Seman's Page
           } else if (index == 1) {
-            // TODO: Navigate to Coffee Page
+            Get.to(() => CoffeeSpotPage());
           }
         },
         destinations: const [

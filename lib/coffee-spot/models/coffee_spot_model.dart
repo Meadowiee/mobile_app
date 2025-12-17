@@ -1,37 +1,51 @@
 class CoffeeSpot {
   final String id;
   final String name;
-  final String address;
-  final String url_address;
-  final String url_blog;
-  final String image;
-  final String contact;
-  final String created_at;
-  final String updated_at;
+  final String? address;
+  final String? urlAddress;
+  final String? urlBlog;
+  final String? image;
+  final String? contact;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
   CoffeeSpot({
     required this.id,
     required this.name,
-    required this.address,
-    required this.url_address,
-    required this.url_blog,
-    required this.image,
-    required this.contact,
-    required this.created_at,
-    required this.updated_at,
+    this.address,
+    this.urlAddress,
+    this.urlBlog,
+    this.image,
+    this.contact,
+    required this.createdAt,
+    required this.updatedAt,
   });
+
+  String get titleCaseName {
+    if (name.isEmpty) {
+      return name;
+    }
+    return name
+        .toLowerCase()
+        .split(' ')
+        .map((word) {
+          if (word.isEmpty) return '';
+          return word[0].toUpperCase() + word.substring(1);
+        })
+        .join(' ');
+  }
 
   factory CoffeeSpot.fromJson(Map<String, dynamic> json) {
     return CoffeeSpot(
-      id: json['id'],
-      name: json['name'] ?? "",
-      address: json['address'] ?? "",
-      url_address: json['url_address'] ?? "",
-      url_blog: json['url_blog'] ?? "",
-      image: json['image'] ?? "",
-      contact: json['contact'] ?? "",
-      created_at: json['created_at'] ?? "",
-      updated_at: json['updated_at'] ?? "",
+      id: json['id'] as String,
+      name: json['name'] as String,
+      address: json['address'] as String?,
+      urlAddress: json['urlAddress'] as String?,
+      urlBlog: json['urlBlog'] as String?,
+      image: json['image'] as String?,
+      contact: json['contact'] as String?,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
   }
 
@@ -40,12 +54,12 @@ class CoffeeSpot {
       'id': id,
       'name': name,
       'address': address,
-      'url_address': url_address,
-      'url_blog': url_blog,
+      'urlAddress': urlAddress,
+      'urlBlog': urlBlog,
       'image': image,
       'contact': contact,
-      'created_at': created_at,
-      'updated_at': updated_at,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
     };
   }
 }

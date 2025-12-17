@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/profile_model.dart';
 import '../services/profile_api_service.dart';
@@ -5,11 +6,12 @@ import '../services/profile_api_service.dart';
 class ProfileController extends GetxController {
   final ProfileApiService apiService = ProfileApiService();
 
+  var validation = RxMap<String, String>({});
   var profile = Rx<Profile?>(null);
   var isLoading = false.obs;
 
   // Versi 1: tanpa login (dummy)
-  final String dummyUserId = "683f20f1-e97a-4483-af5c-bafeb3355d7a";
+  final String dummyUserId = "b2544edc-a392-410e-96d7-58d2d3774d9f";
 
   // Versi 2: kalau sudah login via token
   String? loggedInUserId;
@@ -20,7 +22,6 @@ class ProfileController extends GetxController {
     loadProfile();
   }
 
-  // Memilih mana yang dipakai: login / dummy
   String get activeUserId => loggedInUserId ?? dummyUserId;
 
   // Load profile
@@ -37,13 +38,40 @@ class ProfileController extends GetxController {
   }
 
   // Update profile
-  Future<void> updateProfile(Profile newProfile) async {
+  Future<void> updateProfile(Profile newProfile, {String? profileImage}) async {
+    validation.clear();
+    isLoading.value = true;
     try {
-      await apiService.updateProfile(activeUserId, newProfile);
-      loadProfile(); // refresh
+      await apiService.updateProfile(
+        activeUserId,
+        newProfile,
+        profileImage: profileImage,
+      );
+      await loadProfile();
+      Get.back();
       Get.snackbar("Success", "Profile updated");
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      print(e);
+      if (e is Map<String, dynamic> &&
+          e['statusCode'] == 422 &&
+          e['data'] != null) {
+        print(e);
+        final data = e['data'] as Map<String, dynamic>;
+
+        data.forEach((fieldKey, errorDetail) {
+          if (errorDetail is Map<String, dynamic> &&
+              errorDetail['message'] != null) {
+            validation[fieldKey] = errorDetail['message'];
+          }
+        });
+        print(validation);
+      } else if (e is Map<String, dynamic> && e['message'] != null) {
+        Get.snackbar("Error", e['message']);
+      } else {
+        Get.snackbar("Error", "An unexpected error occurred.");
+      }
+    } finally {
+      isLoading.value = false;
     }
   }
 
@@ -59,15 +87,37 @@ class ProfileController extends GetxController {
 
   // Change password
   Future<void> changePassword(String oldPass, String newPass) async {
+    validation.clear();
+    isLoading.value = true;
+
     try {
       await apiService.changePassword(
         userId: activeUserId,
         oldPassword: oldPass,
         newPassword: newPass,
       );
-      Get.snackbar("Success", "Password updated");
+      Get.back();
+      Get.snackbar("Success", "Password updated successfully!");
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      if (e is Map<String, dynamic> &&
+          e['statusCode'] == 422 &&
+          e['data'] != null) {
+        final data = e['data'] as Map<String, dynamic>;
+
+        data.forEach((fieldKey, errorDetail) {
+          if (errorDetail is Map<String, dynamic> &&
+              errorDetail['message'] != null) {
+            validation[fieldKey] = errorDetail['message'];
+          }
+        });
+      } else if (e is Map<String, dynamic> && e['message'] != null) {
+        Get.snackbar("Error", e['message']);
+      } else {
+        // Handle network or other unexpected errors
+        Get.snackbar("Error", "An unexpected error occurred.");
+      }
+    } finally {
+      isLoading.value = false;
     }
   }
 }
