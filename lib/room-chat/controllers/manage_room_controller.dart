@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../services/room_service.dart';
-import 'room_chat_controller.dart';
+import '../controllers/room_chat_controller.dart';
+import 'package:flutter/material.dart';
 
 class ManageRoomController extends GetxController {
   final String roomId;
@@ -17,6 +18,7 @@ class ManageRoomController extends GetxController {
     fetchManageRoom();
   }
 
+  /// ================= LOAD DATA =================
   Future<void> fetchManageRoom() async {
     try {
       loading.value = true;
@@ -26,80 +28,87 @@ class ManageRoomController extends GetxController {
 
       joinRequests.assignAll(requests);
       members.assignAll(detail['participants'] ?? []);
-    } catch (_) {
-      Get.snackbar("Error", "Failed to load room data");
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Failed to load manage room data",
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       loading.value = false;
     }
   }
 
-  /* ================= JOIN REQUEST ================= */
+  /// ================= REQUEST =================
 
+  /// APPROVE JOIN REQUEST (PAKAI requestId)
   Future<void> approve(String requestId) async {
-    await RoomService.approveJoinRequest(requestId);
-    fetchManageRoom();
-  }
-
-  Future<void> reject(String requestId) async {
-    await RoomService.rejectJoinRequest(requestId);
-    fetchManageRoom();
-  }
-
-  /* ================= REALTIME REMOVE MEMBER ================= */
-
-  Future<void> removeMember(String participantId) async {
-    // backup untuk rollback
-    final backupMembers = List.from(members);
-
-    // 1️⃣ REALTIME UI → langsung hapus dari list
-    members.removeWhere((m) => m['id'] == participantId);
-
     try {
-      // 2️⃣ HIT API
-      await RoomService.removeMember(participantId);
-
-      // 3️⃣ JIKA MEMBER HABIS → DELETE ROOM
-      if (members.isEmpty) {
-        await RoomService.deleteRoom(roomId);
-
-        // hapus room dari list utama (REALTIME)
-        final roomChatController = Get.find<RoomChatController>();
-        roomChatController.myRooms
-            .removeWhere((r) => r['id'] == roomId);
-
-        // tutup halaman
-        Get.back(); // ManageRoomPage
-        Get.back(); // GroupChatPage
-
-        Get.snackbar(
-          "Room Deleted",
-          "Room deleted because no members left",
-          snackPosition: SnackPosition.BOTTOM,
-        );
-      }
+      await RoomService.approveJoinRequest(requestId);
+      fetchManageRoom();
     } catch (e) {
-      // 4️⃣ ROLLBACK JIKA ERROR
-      members.assignAll(backupMembers);
-
-      Get.snackbar(
-        "Error",
-        "Failed to remove member",
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Get.snackbar("Error", "Failed to approve request");
     }
   }
 
-  /* ================= DELETE ROOM MANUAL ================= */
+  /// REJECT JOIN REQUEST (PAKAI requestId)
+  Future<void> reject(String requestId) async {
+    try {
+      await RoomService.rejectJoinRequest(requestId);
+      fetchManageRoom();
+    } catch (e) {
+      Get.snackbar("Error", "Failed to reject request");
+    }
+  }
 
+  /// ================= MEMBERS =================
+
+  /// REMOVE MEMBER (PAKAI participantId)
+  Future<void> removeMember(String participantId) async {
+    try {
+      await RoomService.removeMember(participantId);
+      fetchManageRoom();
+    } catch (e) {
+      Get.snackbar("Error", "Failed to remove member");
+    }
+  }
+
+  /// ================= DELETE ROOM =================
   Future<void> deleteRoom() async {
-    await RoomService.deleteRoom(roomId);
+    final confirm = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text("Delete Room"),
+        content: const Text("This action cannot be undone."),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Get.back(result: true),
+            child: const Text(
+              "Delete",
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
 
-    // realtime hapus dari list
-    Get.find<RoomChatController>()
-        .myRooms
-        .removeWhere((r) => r['id'] == roomId);
+    if (confirm != true) return;
 
-    Get.back(); // ManageRoomPage
-    Get.back(); // GroupChatPage
+    try {
+      await RoomService.deleteRoom(roomId);
+
+      /// refresh room list
+      if (Get.isRegistered<RoomChatController>()) {
+        Get.find<RoomChatController>().fetchMyRooms();
+      }
+
+      Get.back(); // close ManageRoomPage
+      Get.back(); // close GroupChatPage
+    } catch (e) {
+      Get.snackbar("Error", "Failed to delete room");
+    }
   }
 }

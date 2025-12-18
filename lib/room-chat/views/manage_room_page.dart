@@ -123,7 +123,6 @@ class ManageRoomPage extends StatelessWidget {
 
             const Divider(height: 40),
 
-            /// ===== MEMBERS =====
             const Text(
               "Members",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -144,7 +143,6 @@ class ManageRoomPage extends StatelessWidget {
 
             const Divider(height: 40),
 
-            /// ===== DELETE ROOM =====
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,

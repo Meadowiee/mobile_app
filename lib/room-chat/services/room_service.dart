@@ -30,10 +30,14 @@ class RoomService {
   static Future<void> joinRoom(String roomId) async {
     final res = await ApiService.post("/rooms/join/$roomId", {});
 
-    if (res.statusCode != 201) {
+    print("JOIN ROOM STATUS: ${res.statusCode}");
+    print("JOIN ROOM BODY: ${res.body}");
+
+    if (res.statusCode != 200 && res.statusCode != 201) {
       throw Exception("Failed to join room");
     }
   }
+
 
   /// DELETE ROOM (OWNER)
   static Future<void> deleteRoom(String roomId) async {
@@ -44,7 +48,6 @@ class RoomService {
     }
   }
 
-  /// ================= REQUESTS =================
 
   /// GET JOIN REQUESTS (OWNER)
   static Future<List<dynamic>> getJoinRequests(String roomId) async {
