@@ -19,6 +19,7 @@ class GroupChatPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.white,
+
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -33,41 +34,37 @@ class GroupChatPage extends StatelessWidget {
           ),
         ),
         actions: [
-          Obx(() {
-            if (!controller.isOwner) return const SizedBox();
-            return IconButton(
-              icon: Icon(
-                controller.isAdminMode.value
-                    ? Icons.toggle_on
-                    : Icons.toggle_off,
-                size: 32,
-              ),
-              onPressed: controller.toggleAdminMode,
-            );
-          }),
+          /// ✅ ADMIN TOGGLE (FIXED)
+          Obx(() => controller.isOwner.value
+              ? IconButton(
+            icon: Icon(
+              controller.isAdminMode.value
+                  ? Icons.toggle_on
+                  : Icons.toggle_off,
+              size: 32,
+            ),
+            onPressed: controller.toggleAdminMode,
+          )
+              : const SizedBox()),
 
-          Obx(() {
-            if (!controller.isOwner || !controller.isAdminMode.value) {
-              return const SizedBox();
-            }
-            return IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        ManageRoomPage(roomDetail: roomDetail),
-                  ),
-                );
-              },
-            );
-          }),
+          /// ✅ MANAGE ROOM BUTTON (FIXED)
+          Obx(() => controller.isOwner.value &&
+              controller.isAdminMode.value
+              ? IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Get.to(
+                    () => ManageRoomPage(roomDetail: roomDetail),
+              );
+            },
+          )
+              : const SizedBox()),
         ],
       ),
 
       body: Column(
         children: [
+          /// ✅ CHAT LIST (ONLY THIS IS Obx)
           Expanded(
             child: Obx(() => ListView.builder(
               controller: controller.scrollController,
@@ -88,6 +85,7 @@ class GroupChatPage extends StatelessWidget {
             )),
           ),
 
+          /// ❌ NO Obx HERE (BENAR)
           ChatInput(
             controller: controller.messageController,
             onSend: controller.sendMessage,

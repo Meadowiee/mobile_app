@@ -8,76 +8,54 @@ class ChatController extends GetxController {
 
   ChatController(this.roomDetail);
 
-  // ================= CONTROLLERS =================
-  final TextEditingController messageController = TextEditingController();
-  final ScrollController scrollController = ScrollController();
+  final messageController = TextEditingController();
+  final scrollController = ScrollController();
 
-  // ================= STATE =================
-  final RxList<dynamic> messages = <dynamic>[].obs;
-  final RxBool isAdminMode = false.obs;
+  final messages = <dynamic>[].obs;
+  final isAdminMode = false.obs;
+  final isOwner = false.obs; // ✅ SEKARANG Rx
 
-  // ================= GETTERS =================
   String get roomId => roomDetail['id'];
   String? get myUserId => roomDetail['myUserId'];
 
-  bool get isOwner {
-    final createdBy = roomDetail['createdBy'];
-    if (createdBy == null || myUserId == null) return false;
-    return createdBy['id'] == myUserId;
-  }
-
-  // ================= LIFECYCLE =================
   @override
   void onInit() {
     super.onInit();
+    _initOwner();
     loadChatHistory();
     connectSocket();
   }
 
-  // ================= SOCKET =================
+  void _initOwner() {
+    final createdBy = roomDetail['createdBy'];
+    if (createdBy != null && myUserId != null) {
+      isOwner.value = createdBy['id'] == myUserId;
+    }
+  }
+
   void connectSocket() {
     ChatSocketService.connect(
       roomId: roomId,
       onReceive: (data) {
-        if (data == null) return;
-
-        final senderId = data['sender']?['id'];
-
-        // cegah duplicate message dari diri sendiri
-        if (senderId == myUserId) return;
-
+        if (data['sender']?['id'] == myUserId) return;
         messages.add(data);
-        scrollToBottom();
+        _scrollToBottom();
       },
     );
-  }
-
-  // ================= CHAT =================
-  Future<void> loadChatHistory() async {
-    try {
-      final history = await ChatService.getRoomChats(roomId);
-      messages.assignAll(history);
-      scrollToBottom();
-    } catch (e) {
-      debugPrint("Load chat history error: $e");
-    }
   }
 
   void sendMessage() {
     final text = messageController.text.trim();
     if (text.isEmpty) return;
 
-    // optimistic UI
-    final tempMessage = {
+    messages.add({
       'message': text,
       'sender': {
         'id': myUserId,
         'name': 'You',
       },
       'createdAt': DateTime.now().toIso8601String(),
-    };
-
-    messages.add(tempMessage);
+    });
 
     ChatSocketService.sendMessage(
       roomId: roomId,
@@ -85,16 +63,20 @@ class ChatController extends GetxController {
     );
 
     messageController.clear();
-    scrollToBottom();
+    _scrollToBottom();
   }
 
-  // ================= ADMIN =================
+  Future<void> loadChatHistory() async {
+    final history = await ChatService.getRoomChats(roomId);
+    messages.assignAll(history);
+    _scrollToBottom();
+  }
+
   void toggleAdminMode() {
     isAdminMode.value = !isAdminMode.value;
   }
 
-  // ================= UI HELPERS =================
-  void scrollToBottom() {
+  void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 100), () {
       if (scrollController.hasClients) {
         scrollController.animateTo(
@@ -106,7 +88,6 @@ class ChatController extends GetxController {
     });
   }
 
-  // ================= CLEANUP =================
   @override
   void onClose() {
     ChatSocketService.disconnect();

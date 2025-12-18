@@ -5,8 +5,6 @@ import 'group_chat_page.dart';
 import 'create_room_page.dart';
 import '../../coffee-spot/views/coffee_spot_page.dart';
 import '../../profile/views/profile_detail_page.dart';
-import 'recommended_room_detail_page.dart';
-
 
 const String baseUrl = "http://18.143.199.169:3000";
 
@@ -19,7 +17,6 @@ class RoomChatPage extends StatefulWidget {
 
 class _RoomChatPageState extends State<RoomChatPage> {
   int _selectedIndex = 0;
-
   late final RoomChatController controller;
 
   @override
@@ -48,7 +45,7 @@ class _RoomChatPageState extends State<RoomChatPage> {
 
               _sectionTitle("Recommended Rooms"),
               const SizedBox(height: 14),
-              _horizontalRooms(),
+              _recommendedRooms(),
 
               const SizedBox(height: 36),
               Row(
@@ -61,6 +58,7 @@ class _RoomChatPageState extends State<RoomChatPage> {
                     onPressed: () async {
                       await Get.to(() => const CreateRoomPage());
                       controller.fetchMyRooms();
+                      controller.fetchRecommendedRooms();
                     },
                   ),
                 ],
@@ -71,7 +69,7 @@ class _RoomChatPageState extends State<RoomChatPage> {
                 if (controller.loadingMyRooms.value) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                return _verticalRooms();
+                return _myRooms();
               }),
             ],
           ),
@@ -83,7 +81,6 @@ class _RoomChatPageState extends State<RoomChatPage> {
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {
           if (_selectedIndex == index) return;
-
           setState(() => _selectedIndex = index);
 
           if (index == 1) {
@@ -113,42 +110,90 @@ class _RoomChatPageState extends State<RoomChatPage> {
     );
   }
 
-  /* ================= WIDGETS ================= */
+  /// ================= RECOMMENDED =================
+  Widget _recommendedRooms() {
+    return Obx(() {
+      if (controller.loadingRecommended.value) {
+        return const SizedBox(
+          height: 210,
+          child: Center(child: CircularProgressIndicator()),
+        );
+      }
 
-  Widget _horizontalRooms() {
-    return SizedBox(
-      height: 210,
-      child: Obx(() => ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: controller.recommendedRooms.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 14),
-        itemBuilder: (_, i) {
-          final room = controller.recommendedRooms[i];
+      return SizedBox(
+        height: 260,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: controller.recommendedRooms.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 14),
+          itemBuilder: (_, i) {
+            final room = controller.recommendedRooms[i];
+            final imagePath = room['profileImage'];
 
-          return GestureDetector(
-            onTap: () {
-              Get.to(() => RecommendedRoomDetailPage(
-                roomId: room['id'],
-              ));
-            },
-            child: Container(
-              width: 160,
+            return Container(
+              width: 180,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(18),
-                image: DecorationImage(
-                  image: AssetImage(room['image']),
-                  fit: BoxFit.cover,
-                ),
+                color: Colors.grey.shade100,
               ),
-            ),
-          );
-        },
-      )),
-    );
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: imagePath != null
+                        ? Image.network(
+                      "$baseUrl$imagePath",
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    )
+                        : Image.asset(
+                      "assets/images/download (5).jpeg",
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(room['name'],
+                            style:
+                            const TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 4),
+                        Text(
+                          room['description'],
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: room['status'] == 'pending'
+                                ? null
+                                : () => controller.requestJoin(room['id']),
+                            child: Text(
+                              room['status'] == 'pending'
+                                  ? "Pending"
+                                  : "Request to Join",
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      );
+    });
   }
 
-
-  Widget _verticalRooms() {
+  /// ================= MY ROOMS =================
+  Widget _myRooms() {
     return Column(
       children: controller.myRooms.map<Widget>((room) {
         final imagePath = room['profileImage'];
@@ -161,9 +206,8 @@ class _RoomChatPageState extends State<RoomChatPage> {
           child: Card(
             margin: const EdgeInsets.only(bottom: 20),
             clipBehavior: Clip.antiAlias,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
+            shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -181,8 +225,8 @@ class _RoomChatPageState extends State<RoomChatPage> {
                   fit: BoxFit.cover,
                 ),
                 ListTile(
-                  title: Text(room['name'] ?? "-"),
-                  subtitle: Text(room['desc'] ?? ""),
+                  title: Text(room['name']),
+                  subtitle: Text(room['description']),
                 ),
               ],
             ),
@@ -192,22 +236,19 @@ class _RoomChatPageState extends State<RoomChatPage> {
     );
   }
 
-  /* ================= SMALL UI ================= */
-
-  Widget _searchBar() {
-    return TextField(
-      decoration: InputDecoration(
-        hintText: "Search room...",
-        prefixIcon: const Icon(Icons.search),
-        filled: true,
-        fillColor: Colors.grey.shade100,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30),
-          borderSide: BorderSide.none,
-        ),
+  /// ================= UI SMALL =================
+  Widget _searchBar() => TextField(
+    decoration: InputDecoration(
+      hintText: "Search room...",
+      prefixIcon: const Icon(Icons.search),
+      filled: true,
+      fillColor: Colors.grey.shade100,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(30),
+        borderSide: BorderSide.none,
       ),
-    );
-  }
+    ),
+  );
 
   Widget _title(String t) =>
       Text(t, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold));
